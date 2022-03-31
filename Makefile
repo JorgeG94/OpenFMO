@@ -1,6 +1,6 @@
 #xc=FX10
-xc=OpenMPI
-#xc=Spectrum
+#xc=OpenMPI
+xc=Spectrum
 #xc=MVAPICH2
 #xc=INTEL
 FALANX_TOP=$(HOME)/local
@@ -10,7 +10,7 @@ CPP = gcc -E
 xcOK = 0
 
 xcCUDA = VOLTA
-CUDALIBPATH = "/usr/local/cuda-10.1/lib64/"
+CUDALIBPATH = "/sw/summit/cuda/11.0.3/lib64"
 #xcCUDA = VOLTA  # not work...
 #xcCUDA = PASCAL # not work...
 #xcCUDA = 0
@@ -107,11 +107,9 @@ ifeq ($(xc), GNU)
     C99FLAGS = -std=c99
     FFLAGS = -O3 -ffixed-line-length-132 -ffast-math
     OPENMP = -fopenmp
-    #PROF = -pg
-    #ACML = /home/umeda/opt/acml4.4.0/gfortran64_mp/
-    #LIBS = -L$(ACML)/lib -lacml_mp -lacml_mv -lgfortran -lm
-    LIBS =  -lblas -lgfortran -lm -llapack		
-    #LIBS = $(ACML)/lib/libacml_mp.a -lgfortran -lm
+    LIBS =  -L/sw/summit/essl/6.3.0/essl/6.3/lib64 -lessl -lgfortran -lm
+    #LIBS =  -lgfortran -lm 
+    #LIBS =  -lgfortran -lm -L/sw/summit/spack-envs/base/opt/linux-rhel8-ppc64le/gcc-9.1.0/lapackpp-2020.10.02-bfss5d4blp6grn6zng3lljmf4bd2smsa/lib64 -llapackpp		
     xcOK = 1
 endif
 
@@ -127,7 +125,7 @@ ifeq ($(arch), SUMMIT)
     #PROF = -pg
     #ACML = /home/umeda/opt/acml4.4.0/gfortran64_mp/
     #LIBS = -L$(ACML)/lib -lacml_mp -lacml_mv -lgfortran -lm
-    LIBS =  -lblas -lgfortran -lm -llapack		
+    LIBS =  -lgfortran -lm -lessl6464
     #LIBS = $(ACML)/lib/libacml_mp.a -lgfortran -lm
     xcOK = 1
 endif
