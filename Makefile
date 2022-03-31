@@ -1,5 +1,6 @@
 #xc=FX10
 xc=OpenMPI
+#xc=Spectrum
 #xc=MVAPICH2
 #xc=INTEL
 FALANX_TOP=$(HOME)/local
@@ -9,6 +10,7 @@ CPP = gcc -E
 xcOK = 0
 
 xcCUDA = VOLTA
+CUDALIBPATH = "/usr/local/cuda-10.1/lib64/"
 #xcCUDA = VOLTA  # not work...
 #xcCUDA = PASCAL # not work...
 #xcCUDA = 0
@@ -52,7 +54,14 @@ ifeq ($(xc), OpenMPI)
     MPICC = mpicc
     xcMPI = 1
     xc = GNU
+    arch = SUMMIT
 endif
+
+ifeq ($(xc), Spectrum)
+    MPICC = mpicc
+    xcMPI = 1
+    xc = GNU
+endif 
 
 ifeq ($(xc), IMPI)
     MPICC = mpiicc
@@ -90,6 +99,23 @@ endif
 endif
 
 ifeq ($(xc), GNU)
+    CC = gcc
+    FC = gfortran
+    CFLAGS = -g #-m64
+    COPT = -O3
+    COPT0 = -O0
+    C99FLAGS = -std=c99
+    FFLAGS = -O3 -ffixed-line-length-132 -ffast-math
+    OPENMP = -fopenmp
+    #PROF = -pg
+    #ACML = /home/umeda/opt/acml4.4.0/gfortran64_mp/
+    #LIBS = -L$(ACML)/lib -lacml_mp -lacml_mv -lgfortran -lm
+    LIBS =  -lblas -lgfortran -lm -llapack		
+    #LIBS = $(ACML)/lib/libacml_mp.a -lgfortran -lm
+    xcOK = 1
+endif
+
+ifeq ($(arch), SUMMIT)
     CC = gcc
     FC = gfortran
     CFLAGS = -g #-m64
@@ -281,7 +307,7 @@ NVCC := nvcc $(ARCHFLAGS) --compiler-bindir="$(CC_CC)"
 #NVCC_CFLAGS := $(MPI_DEFS) -O3 --compiler-options="$(CC_CFLAGS)" -Xptxas=-v $(PROF_FLAGS) $(CUDA_DEFS)
 NVCC_CFLAGS := $(MPI_DEFS) -O3 --compiler-options="$(CC_CFLAGS)" -Xptxas=-v -lineinfo $(PROF_FLAGS) $(CUDA_DEFS)
 NVCC_LIBS = --compiler-options="$(LIBS)"
-CUDALIBPATH = "/usr/local/cuda-10.1/lib64/"
+
 ifdef CUDALIBPATH
 CUDALIBS = -L$(CUDALIBPATH) -lcudart
 else
