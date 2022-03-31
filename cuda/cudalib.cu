@@ -455,7 +455,7 @@ __host__ int cuda_Init_Sub(const int ndev, const int myrank, const int nprocs)
     return 0;
   };
   cudaGetDeviceCount(&NDEV);
-  if (NDEV>1) NDEV = 1; // Force single dev.
+  //if (NDEV>1) NDEV = 1; // Force single dev.
   //if (ndev > NDEV) return -1;
   if (ndev > NDEV) {
     char hn[16];

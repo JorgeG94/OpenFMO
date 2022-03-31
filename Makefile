@@ -1,5 +1,5 @@
 #xc=FX10
-xc=IMPI
+xc=OpenMPI
 #xc=MVAPICH2
 #xc=INTEL
 FALANX_TOP=$(HOME)/local
@@ -8,10 +8,10 @@ CPP = gcc -E
 
 xcOK = 0
 
-xcCUDA = KEPLER
+xcCUDA = VOLTA
 #xcCUDA = VOLTA  # not work...
 #xcCUDA = PASCAL # not work...
-xcCUDA = 0
+#xcCUDA = 0
 
 xcPROF = 0
 xcMIC = 0
@@ -51,7 +51,7 @@ xcOPENMP = 1
 ifeq ($(xc), OpenMPI)
     MPICC = mpicc
     xcMPI = 1
-    xc = INTEL
+    xc = GNU
 endif
 
 ifeq ($(xc), IMPI)
@@ -98,10 +98,11 @@ ifeq ($(xc), GNU)
     C99FLAGS = -std=c99
     FFLAGS = -O3 -ffixed-line-length-132 -ffast-math
     OPENMP = -fopenmp
-    PROF = -pg
-    ACML = /home/umeda/opt/acml4.4.0/gfortran64_mp/
-    LIBS = -L$(ACML)/lib -lacml_mp -lacml_mv -lgfortran -lm
-    LIBS = $(ACML)/lib/libacml_mp.a -lgfortran -lm
+    #PROF = -pg
+    #ACML = /home/umeda/opt/acml4.4.0/gfortran64_mp/
+    #LIBS = -L$(ACML)/lib -lacml_mp -lacml_mv -lgfortran -lm
+    LIBS =  -lblas -lgfortran -lm -llapack		
+    #LIBS = $(ACML)/lib/libacml_mp.a -lgfortran -lm
     xcOK = 1
 endif
 
@@ -215,8 +216,6 @@ CFLAGS0 := $(CFLAGS) $(COPT0)
 CFLAGS  += $(COPT)
 
 LIBS += -lz
-LIBS_FALANX = $(shell pkg-config --silence-errors --libs kyotocabinet)
-LIBS_FALANX += $(FALANX_TOP)/lib/libfalanx_ds.a
 
 
 #  CUDA
@@ -282,6 +281,7 @@ NVCC := nvcc $(ARCHFLAGS) --compiler-bindir="$(CC_CC)"
 #NVCC_CFLAGS := $(MPI_DEFS) -O3 --compiler-options="$(CC_CFLAGS)" -Xptxas=-v $(PROF_FLAGS) $(CUDA_DEFS)
 NVCC_CFLAGS := $(MPI_DEFS) -O3 --compiler-options="$(CC_CFLAGS)" -Xptxas=-v -lineinfo $(PROF_FLAGS) $(CUDA_DEFS)
 NVCC_LIBS = --compiler-options="$(LIBS)"
+CUDALIBPATH = "/usr/local/cuda-10.1/lib64/"
 ifdef CUDALIBPATH
 CUDALIBS = -L$(CUDALIBPATH) -lcudart
 else
@@ -345,35 +345,6 @@ OBJS_INTEG = integ/ofmo-cutoff-core-dddd.o \
     integ/ofmo-os-dddp.o integ/ofmo-os-dddd.o \
     integ/ofmo-ifc4c-rys.o integ/ofmo-ifc3c-rys.o integ/ofmo-ifc4c.o
 
-#OBJS_INTEG = integ/ofmo-cutoff-core-dddd.o \
-#	     integ/ofmo-cutoff-core-ssss-dpdp.o \
-#	integ/ofmo-cutoff.o integ/ofmo-ifc2c-core.o integ/ofmo-ifc2c.o \
-#	integ/ofmo-ifc3c-os.o integ/ofmo-ifc4c-os.o integ/ofmo-integ.o \
-#	integ/ofmo-oneint-core.o integ/ofmo-oneint.o \
-#	integ/ofmo-twoint-buffer.o integ/ofmo-twoint-core-dddd.o \
-#	integ/ofmo-twoint-core-dddp.o integ/ofmo-twoint-core-ddds.o \
-#	integ/ofmo-twoint-core-ddss-ddpp.o \
-#	integ/ofmo-twoint-core-dpds-dpdp.o \
-#	integ/ofmo-twoint-core-dsds-dppp.o \
-#	integ/ofmo-twoint-core-ssss-dspp.o \
-#	integ/ofmo-twoint-direct.o integ/ofmo-twoint.o integ/fmt.o \
-#	integ/ofmo-core-ssss.o integ/fmt4.o integ/fmt4-gen.o \
-#	integ/ofmo-core-psss.o integ/ofmo-core-psps.o \
-#	integ/ofmo-core-ppss.o integ/ofmo-core-ppps.o \
-#	integ/ofmo-core-pppp.o integ/ofmo-core-dsss.o integ/f-cons.o \
-#	integ/ofmo-core-dsps.o integ/ofmo-core-dspp.o \
-#	integ/ofmo-core-dsds.o \
-#	integ/ofmo-core-dpss.o integ/ofmo-core-dpps.o \
-#	integ/ofmo-core-dppp.o \
-#	integ/ofmo-core-dpds.o integ/ofmo-core-dpdp.o \
-#	integ/ofmo-core-ddss.o \
-#	integ/ofmo-core-ddps.o integ/ofmo-core-ddpp.o \
-#	integ/ofmo-core-ddds.o \
-#	integ/ofmo-core-dddp.o integ/ofmo-core-dddd.o \
-#	integ/ofmo-twoint-buffer-f.o integ/ofmo-ifc4c-f.o \
-#	integ/ofmo-ifc3c-f.o integ/ofmo-ifc2c-f.o \
-#	integ/ofmo-ifc2c-core-f.o \
-#	integ/ofmo-oneint-core-f.o integ/ofmo-oneint-f.o
 
 ifdef xcCUDA
  OBJS_CUDA = cuda/cuda.o cuda/cuda-drv.o cuda/cuda-fmt-drv.o
@@ -382,26 +353,6 @@ endif
 
 target_dirs=basis matope integ scf common
 
-OBJS_FALANX	= falanx/ofmo-falanx-main.o	\
-			falanx/ofmo-monomer-data.o	\
-			master/ofmo-data-struct.o	\
-			worker/ofmo-inter-frag.o	\
-			worker/ofmo-calc-frag.o		\
-			worker/ofmo-counter.o		\
-			worker/ofmo-projection.o	\
-			worker/ofmo-init-dens.o		\
-			falanx/ofmo-storage.o		\
-			falanx/ofmo-mserv-cont.o	\
-			falanx/ofmo-datastore.o		\
-			falanx/ofmo-task-util.o		\
-			falanx/ofmo-worker-task.o	\
-			${OBJS_TOP0}	\
-			${OBJS_BASIS}	\
-			${OBJS_MAT}		\
-			${OBJS_SCF}		\
-			${OBJS_INTEG}	\
-			${OBJS_CUDA}
-PROG_FALANX = ofmo-falanx
 
 OBJS_MASTER = master/ofmo-master-main.o master/ofmo-data-struct.o \
 	  master/ofmo-put-get-master.o ${OBJS_TOP0} ${OBJS_BASIS}
@@ -421,12 +372,6 @@ OBJS_MSERV = mserv/ofmo-mserv-main.o mserv/ofmo-worker-cont.o \
 PROG_MSERV = ofmo-mserv
 
 
-OBJS_RHF = rhf/skel-rhf-main.o rhf/skel-rhf-data.o rhf/skel-rhf-calc.o \
-           rhf/skel-w2e.o \
-           common/ofmo-string.o common/ofmo-misc.o common/ofmo-prof.o \
-           ${OBJS_BASIS} ${OBJS_MAT} ${OBJS_SCF} ${OBJS_INTEG} \
-           ${OBJS_CUDA}
-PROG_RHF = skel-rhf
 
 all : help
 
@@ -434,14 +379,12 @@ help :
 	@echo "usage: make <target>"
 	@echo ""
 	@echo "	original	build ofmo-master, ofmo-worker, ofmo-mserv."
-	@echo "	falanx		build ofmo-falanx."
-	@echo "	rhf		build skel-rhf."
 	@echo "	clean		remove build files."
 	@echo "	help		print this message."
 	@echo ""
 
 
-original: TARGET_DEFS=
+#original: TARGET_DEFS=
 original : master mserv worker
 
 master : master_compile
@@ -453,13 +396,6 @@ mserv : mserv_compile
 worker : worker_compile
 	${LD} -o ${PROG_WORKER} ${LDFLAGS} ${OBJS_WORKER} ${CUDALIBS} ${LIBS}
 
-falanx: TARGET_DEFS=-DUSE_FALANX
-falanx : falanx_compile
-	${LD} -o ${PROG_FALANX} ${LDFLAGS} ${OBJS_FALANX} ${LIBS_FALANX} ${CUDALIBS} ${LIBS}
-
-rhf: TARGET_DEFS=-DOFMO_SKELETON
-rhf : rhf_compile
-	${LD} -o ${PROG_RHF} ${LDFLAGS} ${OBJS_RHF} ${CUDALIBS} ${LIBS}
 
 dir_mk :
 	for dir in ${target_dirs}; do \
@@ -475,25 +411,18 @@ master_compile mserv_compile worker_compile : dir_mk
 	_target=`echo $@ | sed s/_compile//`; \
 	(cd $$_target ; ${MAKE} -f Makefile)
 
-falanx_compile : master_compile worker_compile
-	_target=`echo $@ | sed s/_compile//`; \
-	(cd $$_target ; ${MAKE} -f Makefile)
-
-rhf_compile : dir_mk
-	_target=`echo $@ | sed s/_compile//`; \
-	(cd $$_target ; ${MAKE} -f Makefile)
 
 clean: clean_mk clean_cuda clean_prog clean_scr
 
 clean_mk :
-	_target_dirs="${target_dirs} master mserv worker falanx rhf";\
+	_target_dirs="${target_dirs} master mserv worker";\
 	for dir in $${_target_dirs}; do \
 		(cd $$dir ; ${MAKE} -f Makefile clean) ; \
 	done
 	-rm -f *.dat
 
 clean_prog :
-	-rm -f ${PROG_MASTER} ${PROG_WORKER} ${PROG_MSERV} ${PROG_FALANX} ${PROG_RHF}
+	-rm -f ${PROG_MASTER} ${PROG_WORKER} ${PROG_MSERV}
 
 clean_cuda :
 ifdef xcCUDA
